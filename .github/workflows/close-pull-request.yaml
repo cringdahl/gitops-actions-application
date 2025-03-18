@@ -45,7 +45,7 @@ jobs:
   #     with:
   #       token: ${{ github.token }}
   #       organization: cringdahl
-  #       container: gitops-and-actions
+  #       container: example-app
   #       dry-run: false
   #       prune-untagged: true
   #       keep-tags-regexes: |

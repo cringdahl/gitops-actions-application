@@ -13,7 +13,7 @@ env:
   # REGISTRY: harbor.10-22-37-98.sslip.io
   REGISTRY: ghcr.io
   # REGISTRY_REPO: example/app
-  REGISTRY_REPO: ${{ github.repository_owner }}/gitops-and-actions
+  REGISTRY_REPO: ${{ github.repository_owner }}/example-app
   APPNAME: example-app
   # APPDOMAIN: example.10-22-37-95.sslip.io
   
@@ -40,8 +40,10 @@ jobs:
       with:
         registry: ${{ env.REGISTRY }}
         registry_repo: ${{ env.REGISTRY_REPO }}
-        registry_user: ${{ secrets.REGISTRY_USER }}
-        registry_pass: ${{ secrets.REGISTRY_PASS }}
+        registry_user: ${{ github.actor }}
+        registry_pass: ${{ github.token }}
+        # registry_user: ${{ secrets.REGISTRY_USER }}
+        # registry_pass: ${{ secrets.REGISTRY_PASS }}
 
   create-pr:
     runs-on: ubuntu-latest
