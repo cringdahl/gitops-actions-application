@@ -41,7 +41,7 @@ jobs:
         registry: ${{ env.REGISTRY }}
         registry_repo: ${{ env.REGISTRY_REPO }}
         registry_user: ${{ github.actor }}
-        registry_pass: ${{ github.token }}
+        registry_pass: ${{ github.token }} # requires repo Settings > Actions/General > Workflow permissions > Read and write permissions to be set
         # registry_user: ${{ secrets.REGISTRY_USER }}
         # registry_pass: ${{ secrets.REGISTRY_PASS }}
 

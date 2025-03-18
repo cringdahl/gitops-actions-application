@@ -6,8 +6,10 @@ on:
     - '[0-9]+.[0-9]+.[0-9]+'
 
 env: 
-  REGISTRY: harbor.10-22-37-98.sslip.io
-  REGISTRY_REPO: example/app
+  # REGISTRY: harbor.10-22-37-98.sslip.io
+  # REGISTRY_REPO: example/app
+  REGISTRY: ghcr.io
+  REGISTRY_REPO: cringdahl/example-app
   APPNAME: example-app
 
 jobs:
@@ -45,8 +47,10 @@ jobs:
     - name: Login to registry
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.REGISTRY_USER }}
-        password: ${{ secrets.REGISTRY_PASS }}
+        # username: ${{ secrets.REGISTRY_USER }}
+        # password: ${{ secrets.REGISTRY_PASS }}
+        username: ${{ github.actor }}
+        password: ${{ github.token }}
         registry: ${{ env.REGISTRY }}
 
     - name: Extract metadata (tags, labels) for Docker
@@ -61,7 +65,7 @@ jobs:
     - uses: imjasonh/setup-crane@v0.3
     - name: Tag remote image
       run: |
-        crane auth login ${{ env.REGISTRY }} --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PASS }}
+        crane auth login ${{ env.REGISTRY }} --username ${{ github.actor }} --password ${{ github.token }}
         crane tag \
         ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}:pr-${{ steps.pr.outputs.number }}-${{ steps.sha7.outputs.sha7 }} \
           ${{ steps.meta.outputs.tags }}

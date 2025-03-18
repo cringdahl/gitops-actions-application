@@ -8,8 +8,6 @@ on:
   pull_request:
     types: [ closed ]
     paths: ['**.js', '**.json' , 'public/**', 'views/**', 'Dockerfile']
-env:
-  APPNAME: example-app
 
 jobs:
   close-manifest-pr:
@@ -31,7 +29,6 @@ jobs:
             workflow_id: 'close-pull-request.yaml',
             ref: 'main',
             inputs: {
-              appname: '${{ env.APPNAME }}',
               actor: '${{ github.actor }}  <${{ steps.get-email.outputs.address }}>',
               head_pr: '${{ github.event.number }}',
               merged: ${{ github.event.pull_request.merged }}
