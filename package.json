@@ -1,0 +1,33 @@
+{
+  "name": "gitops-actions-application",
+  "version": "1.0.1",
+  "description": "This project was bootstrapped with Fastify-CLI.",
+  "main": "app.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "tap \"test/**/*.test.js\"",
+    "start": "fastify start -p 8080 -l info app.js",
+    "dev": "fastify start -p 8080 -w -l info -P app.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fastify/autoload": "^5.0.0",
+    "@fastify/sensible": "^5.0.0",
+    "@fastify/static": "^6.11.2",
+    "@fastify/view": "^8.2.0",
+    "env-var": "^7.4.1",
+    "fastify": "^4.0.0",
+    "fastify-cli": "^5.8.0",
+    "fastify-plugin": "^4.0.0",
+    "handlebars": "^4.7.8",
+    "humanize-duration": "^3.30.0"
+  },
+  "devDependencies": {
+    "@types/node": "^18.18.5",
+    "tap": "^16.1.0"
+  }
+}

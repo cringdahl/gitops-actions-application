@@ -1,0 +1,105 @@
+name: Code and Image Release Cut
+
+on:
+  push:
+    tags:
+    - '[0-9]+.[0-9]+.[0-9]+'
+
+env: 
+  REGISTRY: harbor.10-22-37-98.sslip.io
+  REGISTRY_REPO: example/app
+  APPNAME: example-app
+
+jobs:
+  tag_remote:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Exit if on main branch
+      if: endsWith(github.ref, 'main') == true
+      run: |
+        echo "Please only tag on PR-based branches."
+        exit -1
+
+    - name: Get short SHA of commit for image tagging
+      id: sha7
+      run: echo "sha7=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+    - name: Get PR number
+    # this uses github cli to list the PR [gh pr]
+    #   associated with the head branch name (minus any prefix) [git name-rev]
+    #     associated with the commit [git log]
+    #       associated with the tag that was pushed to run this workflow
+    ### above relies on specific behavior: close & merge PR, 'git tag x.y.z' at console on feature branch
+    ### ie; git checkout not_main && git tag x.y.z && git push --tags
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+      id: pr
+      run: echo "number=$(gh pr list -H $(git name-rev --name-only --exclude=tags/* $(git log --format=format:%H -n1) | sed "s/.*\///") -q ".[0].number" --json number)" >> $GITHUB_OUTPUT
+
+    - name: Login to registry
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.REGISTRY_USER }}
+        password: ${{ secrets.REGISTRY_PASS }}
+        registry: ${{ env.REGISTRY }}
+
+    - name: Extract metadata (tags, labels) for Docker
+      # because this is happening on a tag event, the label will be the pushed tag
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        # we don't use the 'latest' tag
+        flavor: |
+          latest=false
+
+    - uses: imjasonh/setup-crane@v0.3
+    - name: Tag remote image
+      run: |
+        crane auth login ${{ env.REGISTRY }} --username ${{ secrets.REGISTRY_USER }} --password ${{ secrets.REGISTRY_PASS }}
+        crane tag \
+        ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}:pr-${{ steps.pr.outputs.number }}-${{ steps.sha7.outputs.sha7 }} \
+          ${{ steps.meta.outputs.tags }}
+
+    - name: Write tag info to PR comment
+      uses: actions/github-script@v7
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        script: |
+          const output = `# Image Tagging Results
+          image: ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}:${{ steps.meta.outputs.tags }}
+          author: ${{ github.actor }}
+          short sha: ${{ steps.sha7.outputs.sha7 }}`;
+
+          github.rest.issues.createComment({
+            issue_number: ${{ steps.pr.outputs.number }},
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })
+    - name: Get email associated with Github username
+      uses: cringdahl/get-github-email-by-username@v1
+      id: get-email
+      with: 
+        github_username: ${{ github.actor }}
+    - name: Update Manifest and Update PR
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.MANIFEST_PAT }} # must be repo scoped
+        repository: cringdahl/gitops-actions-manifests
+        event-type: update-container-image
+        client-payload: |-
+          {
+            "appname": "${{ env.APPNAME }}",
+            "actor": "${{ github.actor }} <${{steps.get-email.outputs.address}}>",
+            "head_pr": "${{ steps.pr.outputs.number }}",
+            "message": "Updating image tag to: ${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}:${{ steps.meta.outputs.tags }}",
+            "env_target": "prod",
+            "image": "${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}:${{ steps.meta.outputs.tags }}",
+            "version": "${{ steps.meta.outputs.tags }}"
+          }

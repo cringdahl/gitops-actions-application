@@ -1,0 +1,94 @@
+name: Build Container Image
+
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+    branches: [ main ]
+    paths: ['**.js', '**.json' , 'public/**', 'views/**', 'Dockerfile']    
+
+concurrency:
+  group: container-build
+
+env: 
+  # REGISTRY: harbor.10-22-37-98.sslip.io
+  REGISTRY: ghcr.io
+  # REGISTRY_REPO: example/app
+  REGISTRY_REPO: ${{ github.repository_owner }}/gitops-and-actions
+  APPNAME: example-app
+  # APPDOMAIN: example.10-22-37-95.sslip.io
+  
+jobs:
+  build-image:
+    runs-on: ubuntu-latest
+    # runs-on: internal-runner
+    outputs:
+      version: ${{ steps.image.outputs.version }}
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
+    - name: Use Node.js 18.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18.x'
+    - run: npm ci
+    - run: npm run build --if-present
+    - run: npm test
+
+    - name: Build Container Image
+      uses: cringdahl/build-container-image@v1
+      id: image
+      with:
+        registry: ${{ env.REGISTRY }}
+        registry_repo: ${{ env.REGISTRY_REPO }}
+        registry_user: ${{ secrets.REGISTRY_USER }}
+        registry_pass: ${{ secrets.REGISTRY_PASS }}
+
+  create-pr:
+    runs-on: ubuntu-latest
+    # runs-on: internal-runner
+    needs: [build-image]
+    steps:
+    - name: Determine target environment based on event type
+      id: env
+      run: |
+        ACTION=${{ github.event_name }}
+        echo "target=$( [[ $ACTION == 'push' ]] && echo prod || echo dev )" >> $GITHUB_OUTPUT
+    - name: Get email associated with Github username
+      uses: cringdahl/get-github-email-by-username@v1
+      id: get-email
+      with: 
+        github_username: ${{ github.actor }}
+    - name: Update Manifest and Create PR
+      uses: peter-evans/repository-dispatch@v3
+      with:
+        token: ${{ secrets.MANIFEST_PAT }} # must be repo scoped
+        repository: cringdahl/gitops-actions-manifests
+        event-type: update-container-image
+        client-payload: |-
+          {
+            "appname": "${{ env.APPNAME }}",
+            "actor": "${{ github.actor }} <${{steps.get-email.outputs.address}}>",
+            "head_pr": "${{ github.event.number }}",
+            "message": "Merging '${{ github.head_ref }}' into '${{ github.base_ref }}': ${{ github.event.pull_request.title }}",
+            "env_target": "${{ steps.env.outputs.target }}",
+            "image": "${{ env.REGISTRY }}/${{ env.REGISTRY_REPO }}:${{ needs.build-image.outputs.version }}",
+            "version": "${{ needs.build-image.outputs.version }}"
+          }
+  ## will re-enable when internal runners are up
+  # test:
+  #   runs-on: ubuntu-latest
+  #   # runs-on: internal-runner
+  #   needs: [create-pr]
+  #   steps:
+  #     - name: Check the deployed service URL
+  #       uses: jtalk/url-health-check-action@v4
+  #       with:
+  #         url: https://${{ env.APPNAME }}-pr-${{ github.event.number }}.${{ env.APPDOMAIN }}
+  #         max-attempts: 30
+  #         retry-delay: 15s
+  #     - name: Checkout source code
+  #       uses: actions/checkout@v4
+
+  #     - name: Run external tests
+  #       run: |
+  #         testing/test.sh https://${{ env.APPNAME }}-pr-${{ github.event.number }}.${{ env.APPDOMAIN }}

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>GitOps and GitHub Actions</title>
+  <link rel="stylesheet" href="public/simple-grid.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    #argocd-logo {
+      width: 4rem;
+      display: block;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+    }
+
+    footer {
+      display: block;
+      position: absolute;
+      width: 100vw;
+      bottom: 1rem;
+    }
+
+    footer small {
+      margin-bottom: 1rem;
+      text-align: center;
+      display: block;
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h2>Argo CD &amp; GitHub Actions Example</h2>
+  </header>
+  {{{body}}}
+  <footer>
+    <small>Deployed by Argo CD</small>
+    <img id="argocd-logo" src="public/argocd.svg" alt="Argo CD Logo">
+  </footer>
+</body>
+
+</html>
