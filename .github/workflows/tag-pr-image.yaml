@@ -31,7 +31,7 @@ jobs:
       id: sha7
       run: echo "sha7=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-    - name: Get PR number
+    - name: Get PR number associated with git commit
     # this uses github cli to list the PR [gh pr]
     #   associated with the head branch name (minus any prefix) [git name-rev]
     #     associated with the commit [git log]
@@ -42,6 +42,7 @@ jobs:
       env:
         GH_TOKEN: ${{ github.token }}
       id: pr
+      # TODO: see if this can be refactored
       run: echo "number=$(gh pr list -H $(git name-rev --name-only --exclude=tags/* $(git log --format=format:%H -n1) | sed "s/.*\///") -q ".[0].number" --json number)" >> $GITHUB_OUTPUT
 
     - name: Login to registry
