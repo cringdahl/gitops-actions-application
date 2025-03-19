@@ -10,12 +10,12 @@ concurrency:
   group: container-build
 
 env: 
-  # REGISTRY: harbor.10-22-37-98.sslip.io
+  # REGISTRY: harbor.127-0-0-1.sslip.io
   REGISTRY: ghcr.io
   # REGISTRY_REPO: example/app
   REGISTRY_REPO: ${{ github.repository_owner }}/example-app
   APPNAME: example-app
-  # APPDOMAIN: example.10-22-37-95.sslip.io
+  # APPDOMAIN: example.127-0-0-1.sslip.io
   
 jobs:
   build-image:
