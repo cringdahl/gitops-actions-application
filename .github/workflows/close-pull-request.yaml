@@ -23,9 +23,12 @@ jobs:
         if: ${{ github.event.pull_request.merged == false }}
         run: |
           echo "PR not merged, exiting..."
-          exit 0
+          exit 1
   create-new-release:
     runs-on: ubuntu-latest
+    needs: [check-if-merged]
+    env:
+      GH_TOKEN: ${{ github.token }}
     outputs:
       new_version: ${{ steps.version.outputs.new_version }}
     steps:
@@ -41,7 +44,7 @@ jobs:
       run: |
         gh release create ${{ steps.version.outputs.new_version }} --generate-notes
   
-  tag_remote:
+  tag-remote:
     runs-on: ubuntu-latest
     needs: [create-new-release]
     steps:
@@ -112,6 +115,7 @@ jobs:
 
   close-manifest-pr:
     runs-on: ubuntu-latest
+    needs: [tag-remote]
     steps:
     - name: Get email associated with Github username
       uses: cringdahl/get-github-email-by-username@v1
