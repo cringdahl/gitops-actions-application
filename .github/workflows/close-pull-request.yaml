@@ -32,6 +32,8 @@ jobs:
     outputs:
       new_version: ${{ steps.version.outputs.new_version }}
     steps:
+    - name: Checkout source code
+      uses: actions/checkout@v4
     - name: Get new version
       id: version
       # If we have no releases, cur_ver will be blank, and new_version will be 1
