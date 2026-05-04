@@ -1,4 +1,4 @@
-FROM registry.access.redhat.com/ubi8/nodejs-18 as build
+FROM node:18.20.0 as build
 
 WORKDIR /usr/src/app
 
