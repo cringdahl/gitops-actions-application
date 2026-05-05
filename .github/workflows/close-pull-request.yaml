@@ -140,7 +140,7 @@ jobs:
 
     - name: Prune images for PR-${{ github.event.pull_request.number }}
       run: |
-        gh api --paginate --slurp \
+        gh api --paginate \
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2026-03-10" \
           /user/packages/container/example-app/versions \
