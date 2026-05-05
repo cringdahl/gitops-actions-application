@@ -139,6 +139,8 @@ jobs:
       run: echo "sha7=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
     - name: Prune images for PR-${{ github.event.pull_request.number }}
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         gh api --paginate --slurp \
           -H "Accept: application/vnd.github+json" \
