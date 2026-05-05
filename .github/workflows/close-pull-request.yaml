@@ -124,7 +124,6 @@ jobs:
           })
   prune-pr-images:
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.merged == false }}
     needs: [close-manifest-pr]
     permissions:
       contents: read
