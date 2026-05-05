@@ -122,33 +122,38 @@ jobs:
               merged: ${{ github.event.pull_request.merged }}
             }
           })
-  # prune-pr-images:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - name: Prune images for PR-${{ github.event.number }}
-  #     uses: vlaurin/action-ghcr-prune@v0.6.0
-  #     with:
-  #       token: ${{ github.token }}
-  #       organization: cringdahl
-  #       container: example-app
-  #       dry-run: false
-  #       prune-untagged: true
-  #       keep-tags-regexes: |
-  #         ^[0-9]+.[0-9]+.[0-9]+$
-  #       prune-tags-regexes: |
-  #         ^pr-${{ github.event.number }}
-  # remove-pr-images:
-  #   runs-on: ubuntu-latest
-  #   if: ${{ github.event.pull_request.merged == false }}
-  #   steps:
-  #   - name: Checkout source code
-  #     uses: actions/checkout@v6
-  #     with:
-  #       fetch-depth: 0
+  prune-pr-images:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.pull_request.merged == false }}
+    needs: [close-manifest-pr]
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - name: Checkout source code
+      uses: actions/checkout@v6
+      with:
+        fetch-depth: 0
 
-  #   - name: Get short SHA of commit for image tagging
-  #     id: sha7
-  #     run: echo "sha7=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+    - name: Get short SHA of commit for image tagging
+      id: sha7
+      run: echo "sha7=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
-  # TODO: find the gh cli api magic for deleting a specific image tag
-  # that isn't also tagged as a release
+    - name: Prune images for PR-${{ github.event.pull_request.number }}
+      run: |
+        gh api --paginate --slurp \
+          -H "Accept: application/vnd.github+json" \
+          -H "X-GitHub-Api-Version: 2026-03-10" \
+          /user/packages/container/example-app/versions \
+          -q '.[] | select(
+            .metadata.container.tags as $tags |
+            ($tags | type == "array" and (
+              ($tags | length == 0) or
+              ($tags | length == 1 and $tags[0] | type == "string" and test("^pr-${{ github.event.pull_request.number }}-[a-zA-Z0-9]{7}$"))
+            ))  
+          ) | .id' \
+          | xargs -r -I {} gh api \
+            -X DELETE \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2026-03-10" \
+            /user/packages/container/example-app/versions/{}
