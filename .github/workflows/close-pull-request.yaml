@@ -141,6 +141,8 @@ jobs:
     - name: Prune images for PR-${{ github.event.pull_request.number }}
       # the length == 0 is for the tagless by-products
       # the length == 1 is for non-released, PR tagged images we no longer need
+      env:
+        GH_TOKEN: ${{ github.token }}
       run: |
         gh api --paginate \
           -H "Accept: application/vnd.github+json" \

@@ -36,6 +36,9 @@ While creating the MANIFEST_PAT, you should:
 1. Configure **Permissions** to enable **Read and Write** access to **Actions**.
 1. Configure **Permissions** to enable **Read and Write** access to **Content** (for `repository_dispatch` access).
 
+# TODO
+* somehow select from list of current PR images
+    * justification: maybe the latest image was a step too far?
 ## Local Development
 
 ```bash
