@@ -1,4 +1,4 @@
-name: Create Release
+name: Manage Release & Images
 
 # Fetch email address of user triggering this action
 # Trigger manifest repo PR closure (this includes the fetched email address)
