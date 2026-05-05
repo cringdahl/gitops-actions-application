@@ -148,7 +148,9 @@ jobs:
             .metadata.container.tags as $tags |
             ($tags | type == "array" and (
               ($tags | length == 0) or
-              ($tags | length == 1 and $tags[0] | type == "string" and test("^pr-${{ github.event.pull_request.number }}-[a-zA-Z0-9]{7}$"))
+              ($tags | length == 1) and 
+              ($tags[0] | type == "string" and 
+                test("^pr-${{ github.event.pull_request.number }}-[a-zA-Z0-9]{7}$"))
             ))  
           ) | .id' \
           | xargs -r -I {} gh api \
