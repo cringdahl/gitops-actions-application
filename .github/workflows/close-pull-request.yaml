@@ -139,10 +139,12 @@ jobs:
       run: echo "sha7=$(echo ${{ github.event.pull_request.head.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
 
     - name: Prune images for PR-${{ github.event.pull_request.number }}
+      # the length == 0 is for the tagless by-products
+      # the length == 1 is for non-released, PR tagged images we no longer need
       env:
         GH_TOKEN: ${{ github.token }}
       run: |
-        gh api --paginate --slurp \
+        gh api --paginate \
           -H "Accept: application/vnd.github+json" \
           -H "X-GitHub-Api-Version: 2026-03-10" \
           /user/packages/container/example-app/versions \
@@ -150,7 +152,9 @@ jobs:
             .metadata.container.tags as $tags |
             ($tags | type == "array" and (
               ($tags | length == 0) or
-              ($tags | length == 1 and $tags[0] | type == "string" and test("^pr-${{ github.event.pull_request.number }}-[a-zA-Z0-9]{7}$"))
+              ($tags | length == 1) and 
+              ($tags[0] | type == "string" and 
+                test("^pr-${{ github.event.pull_request.number }}-[a-zA-Z0-9]{7}$"))
             ))  
           ) | .id' \
           | xargs -r -I {} gh api \
